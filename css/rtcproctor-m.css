@@ -1,0 +1,129 @@
+body {
+    font-family: sans-serif;
+    margin:0px;
+	width: 100%;    
+}
+
+h1 {
+	font-family: sans-serif !important;    
+    top: 0;
+    background-color:dimgray;
+    text-align:center;
+    color:whitesmoke;
+    margin:0px;
+    padding:5px;
+    font-size:15px;
+}
+
+.menu {
+    margin: 3px;
+    padding:3px;
+    width: 100%;
+    font-size:15px;
+    text-align: center;
+    font-weight:500;
+}
+
+.menu-item {
+    cursor:pointer;
+    border: 0px solid black;padding:2px;
+}
+
+.menu-item:hover {
+    color:darkgray;
+    font-size;1em;
+}
+
+a.page{
+	cursor: pointer;
+	color:black;
+    font-weight:500;
+}
+.page:target{
+	color: red;
+}
+.page:hover{
+	color: darkgray;
+}
+#display_section{
+	display: none;
+}
+.pointer{
+	cursor: pointer;
+}
+
+.vdostream-box {
+	position: relative;
+	padding-bottom: 75%;
+	height: 0;
+	max-width: 100%;
+	background: #333;
+	overflow: scroll;
+    object-fit:contain !important
+    object-position:center
+}
+
+.media-container {
+}
+.media-box {
+}
+
+theboxes[boxing="10"] > box {
+    max-width: 15%;
+    width: 15%;
+}
+
+video {
+    height: 100%; !important;
+    width: auto; !important;
+}
+
+vdoelm {
+    object-fit:contain !important;
+}
+
+.padding {
+    margin:1px !important;
+    padding:1px !important;
+    cursor:pointer;
+}
+
+.btn {
+  margin-right:10px;
+  padding: 10px 10px;
+  min-width:80px;
+  background-color:white;
+  color:black !important;
+  border-width:thin !important;
+  border-color:black !important;
+  border-radius: 4px !important;
+  transition-duration: 0.2s;
+}        
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { 
+    background-color:darkgray; /* Green */
+    color: white;
+  }
+}
+
+.btn:active {
+  background-color:black; /* Green */
+  color: white !important;
+}
+
+.attn-sign {
+    float:right;
+    padding-right:5px;
+    height: 2vh;
+    display:none;
+}
+
+.sepline {
+    padding: 0px 5px;
+    color: darkgray
+}
+
+
+       
+

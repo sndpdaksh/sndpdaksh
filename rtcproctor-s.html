@@ -1,0 +1,398 @@
+<!--
+  * RTCProctor - Student Page
+  * Peer-to-peer video proctoring for remote online exams based on WebRTC and RTCMulticonnection library
+  * Copyright 2021 Nopporn Chotikakamthorn
+  * Source : https://github.com/nopcho/rtcproctor.git
+  * License : https://github.com/nopcho/rtcproctor/blob/main/LICENSE (MIT)
+-->
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>RTCProctor - Student Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="shortcut icon" href="media/favicon.png" type="image/x-icon"> 
+    <link rel="stylesheet" href="css/rtcproctor.css">
+    <link rel="stylesheet" href="css/getHTMLMediaElement.css">  
+    
+    <script src="js/RTCMultiConnection.min.js"></script>
+    <script src="js/adapter.js"></script>
+    <script src="js/socket.io.js"></script>
+    <script src="js/DetectRTC.min.js"></script> 
+    <script src="js/getHTMLMediaElement.js"></script>
+    <script> 
+        //initialze global vars
+        var videoConstraints;
+        var number_users = 0;
+        var oldmessage = "";
+        var conn_status = "";
+        
+        function setVdoConstraint() {
+            connection.mediaConstraints = {
+                video: videoConstraints,
+                audio: true
+            };
+        }
+        
+        function disableInputButtons() {
+            document.getElementById('open-room').disabled = true;
+            document.getElementById('stream-code').disabled = true;
+            document.getElementById('selectcam').disabled = true;
+        }
+
+        function setCamera() {
+            var selectedcam = document.getElementById("selectcam");
+            videoConstraints.deviceId = selectedcam.value;
+            console.log("selectedcam: " + selectedcam.value);
+            console.log("vdoConstraints: " + videoConstraints);
+        }
+        
+        function beep() {
+            var beep = new Audio('media/beep.mp3');
+            beep.play(); 
+        }    
+        function resetUI() {
+            document.getElementById('main-header').innerHTML  = "RTCProctor - Student Page";
+            document.getElementById('main-header').style.backgroundColor = "dimgray";                
+            document.getElementById('open-room').disabled = false;
+            document.getElementById('stream-code').disabled = false;
+            document.getElementById('selectcam').disabled = false;
+        }
+    </script>
+
+</head>
+
+<body>
+
+<h1 id="main-header">RTCProctor - Student Page</h1>
+
+<div class="main-container">    
+    <div class="input-box">
+        <select id="selectcam"></select>
+        <input type="text" id="stream-code" placeholder="Enter your stream code">
+    </div>        
+    <div class="button-box"> 
+        <button type="submit" class="btn" id="open-room">Go Live</button>
+        <button type="submit" class="btn" id="reset">Stop</button>
+    </div>
+    
+    <div class="stream-container">
+        <div id="videos-container"></div>
+        <div id="message-container" style="display:none">    
+             <div class="attention"><img src="media/hand_waving_red.png" id="attn-button"></div>         
+            <div contenteditabl="true" id="chatmsg-box" rows="8" readonly>
+                Click <img src="media/hand_waving_red.png" style="width:1.5em;"> to raise attention.<br>
+            </div>
+            <input type="text" id="msg-to-remote" placeholder="Type something here + [Enter] or [Send]">
+            <button type="submit" class="btn" id="send-msg"  >Send</button>
+        </div>
+    </div>
+    
+</div>
+                                         
+<!-- ==================================================================
+This part was based on RTCMulticonnection one-way video conf. demo -->
+
+<script>
+        
+// .......................UI Code........................    
+document.getElementById('open-room').onclick = function() {
+        var stream_code = document.getElementById('stream-code').value;
+        if (stream_code == "") {
+            alert("Enter your stream code first");
+            conn_status = "";
+        } else {
+            disableInputButtons();
+            setCamera();
+            setVdoConstraint();
+            connection.open(document.getElementById('stream-code').value, function(isRoomOpened, stream_code, error) {
+                if(error || !isRoomOpened) {
+                    if (error) {
+                        errmsg = error;                            
+                    } else {
+                        errmsg = "Streaming room could not be opened.";                       
+                    }
+                    conn_status = "";
+                    document.getElementById('main-header').style.backgroundColor = "red";
+                    document.getElementById('main-header').innerHTML = errmsg;
+                    let clist  = document.getElementById('videos-container');
+                    clist.removeChild(clist.childNodes[0]);
+                    setTimeout( function() {document.getElementById('reset').click();}, 2000);
+                } else {
+                    conn_status = "online";
+                    document.getElementById('main-header').style.backgroundColor = "green";
+                    document.getElementById('videos-container').style.display = "inline";
+                    document.getElementById("message-container").style.display = "inline";
+                    console.log("connection = " + connection.isOnline);
+                }
+          });
+        }
+    };
+
+    document.getElementById('reset').onclick = function() {
+        document.getElementById("message-container").style.display = "none";
+        document.getElementById('main-header').innerHTML = "Resetting connection...";
+        document.getElementById('main-header').style.backgroundColor = "darkorange";
+        connection.closeSocket();
+        conn_status = "";
+        var clist  = document.getElementById('videos-container');
+        if (clist.childNodes[0]) {
+            clist.removeChild(clist.childNodes[0]);
+        }
+        setTimeout(function () { location.reload(); }, 1000);
+    };
+
+	document.getElementById('send-msg').onclick = function() {
+        var msg = document.getElementById('msg-to-remote').value;
+        if (msg) {
+            var chatbox = document.getElementById('chatmsg-box');
+            if (msg.substring(0, 4) == "http") {
+                msg = "<a href='" + msg + "' target='_blank'>" + msg + "</a>";
+            }
+            
+            chatbox.innerHTML  = chatbox.innerHTML + "<br><span class='local-txt'>[me]:" + msg + "</span><br>";
+            chatbox.scrollTop = chatbox.scrollHeight - chatbox.clientHeight;
+            connection.extra.message = msg; 
+            connection.extra.attention = ""; 
+            connection.updateExtraData();
+            document.getElementById('msg-to-remote').value = "";            
+        }
+    }
+    
+    document.getElementById("msg-to-remote").addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            document.getElementById("send-msg").click();
+        }
+    });
+    
+	document.getElementById('attn-button').onclick = function() {
+        let d = new Date();
+        let hh = ("0" + d.getHours()).slice(-2);
+        let mm = ("0" + d.getMinutes()).slice(-2);
+        let ss = ("0" + d.getSeconds()).slice(-2);
+        let msg = "<span style='color:red;'>Attn Request: " + hh + ":" + mm + ":" + ss + "</span>";
+        var chatbox = document.getElementById('chatmsg-box');
+        chatbox.innerHTML  = chatbox.innerHTML + "<span class='local-txt'>[me]:" + msg + "</span><br>";
+        chatbox.scrollTop = chatbox.scrollHeight - chatbox.clientHeight;
+        connection.extra.attention = msg; 
+        connection.extra.message = ""; 
+        connection.updateExtraData();
+    }
+    
+// ..................RTCMultiConnection Code.............
+
+var connection = new RTCMultiConnection();
+
+// Setup some default configurations
+
+//connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/'; //default public signaling server (may no longer functional)
+connection.socketURL = 'https://sndp-daksh.herokuapp.com/';
+
+connection.socketMessageEvent = 'rtc-video-proctoring';
+
+connection.session = {
+    audio: true,
+    video: true,
+    oneway: true
+};
+
+connection.sdpConstraints.mandatory = {
+    OfferToReceiveAudio: false,
+    OfferToReceiveVideo: false
+};
+    
+videoConstraints = {
+    width: {
+        ideal: 320
+    },
+    height: {
+        ideal: 240
+    },
+    frameRate: 5
+};      
+    
+//detect avaiable cameras, and add to the list      
+connection.DetectRTC.load(function() {
+    connection.DetectRTC.videoInputDevices.forEach(function(device) {
+        var option = document.createElement('option');
+        
+        // this is what people see
+        option.innerHTML = device.label;
+
+        // but this is what inernally used to select relevant device
+        option.value = device.id;
+
+        // append to <select> element
+        document.getElementById('selectcam').appendChild(option);
+    });
+});
+    
+document.getElementById("selectcam").selectedIndex  = 0;
+ 
+connection.videosContainer = document.getElementById('videos-container');
+    
+connection.onstream = function(event) {
+    var existing = document.getElementById(event.streamid);
+    if(existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
+
+    event.mediaElement.removeAttribute('src');
+    event.mediaElement.removeAttribute('srcObject');
+    event.mediaElement.muted = true;
+    event.mediaElement.volume = 0;
+
+    var video = document.createElement('video');
+
+    try {
+        video.setAttributeNode(document.createAttribute('autoplay'));
+        video.setAttributeNode(document.createAttribute('playsinline'));
+    } catch (e) {
+        video.setAttribute('autoplay', true);
+        video.setAttribute('playsinline', true);
+    }
+
+    if(event.type === 'local') {
+      video.volume = 0;
+      try {
+          video.setAttributeNode(document.createAttribute('muted'));
+      } catch (e) {
+          video.setAttribute('muted', true);
+      }
+    }
+    video.srcObject = event.stream;
+
+    var width = parseInt(connection.videosContainer.clientWidth);
+    var mediaElement = getHTMLMediaElement(video, {
+        buttons: ['mute-audio', 'full-screen'],
+        width: width,
+        showOnMouseEnter: false,
+        toggle:['mute-audio']
+    });
+
+    connection.videosContainer.appendChild(mediaElement);
+
+    mediaElement.id = event.streamid;
+    
+};
+
+connection.onstreamended = function(event) {
+    var mediaElement = document.getElementById(event.streamid);
+    if (mediaElement) {
+        mediaElement.parentNode.removeChild(mediaElement);
+        console.log("Removing " + event.userid + " " + connection.sessionid);
+        
+        if(!connection.isInitiator) {
+            let msg = "Streaming ended";
+                document.getElementById('main-header').style.backgroundColor = "darkorange";
+                document.getElementById('main-header').innerHTML = msg;  
+                setTimeout( function() {
+                    document.getElementById('reset').click();
+                }, 2000);
+        }
+    }
+};
+
+connection.onMediaError = function(e) {
+    if (e.message === 'Concurrent mic process limit.') {
+        if (DetectRTC.audioInputDevices.length <= 1) {
+            alert('Please select external microphone. Check github issue number 483.');
+            return;
+        }
+
+        var secondaryMic = DetectRTC.audioInputDevices[1].deviceId;
+        connection.mediaConstraints.audio = {
+            deviceId: secondaryMic
+        };
+
+        connection.join(connection.sessionid);
+    }
+};
+    
+
+connection.onExtraDataUpdated = function(event) {
+      if(event.type != 'local') {          
+          var chatbox = document.getElementById('chatmsg-box');
+          if (event.extra.message && event.extra.message != oldmessage) {
+              chatbox.innerHTML  = chatbox.innerHTML + "<br>" + event.extra.message;
+              chatbox.scrollTop = chatbox.scrollHeight - chatbox.clientHeight;
+              oldmessage = event.extra.message;
+          } else {
+              if (event.extra.attention && event.extra.attention != oldmessage) {
+                  beep();
+                  chatbox.innerHTML  = chatbox.innerHTML + "<br>" + event.extra.attention;
+                  chatbox.scrollTop = chatbox.scrollHeight - chatbox.clientHeight;
+                  oldmessage = event.extra.attention;
+              }
+          }
+      }
+};       
+    
+
+setInterval(function(){ 
+    if (conn_status) {
+        if(!connection.isOnline) {
+            console.log("connection is offline");
+            document.getElementById('videos-container').style.display = "none";
+            document.getElementById("message-container").style.display = "none";
+            beep();
+            resetUI();
+            conn_status = "offline";
+        }
+        else {
+            console.log("connection is online");
+            if (conn_status == "offline") {
+                conn_status = "";
+                document.getElementById('open-room').click();
+            }
+        }
+    }
+}, 30000);
+
+
+if(location.href.indexOf("#") > -1) {
+    document.getElementById('stream-code').value = location.href.split('#')[1];
+};
+    
+// detect 2G
+if(navigator.connection &&
+   navigator.connection.type === 'cellular' &&
+   navigator.connection.downlinkMax <= 0.115) {
+  alert('2G is not supported. Please use a better internet service.');
+}
+    
+</script>
+
+</body>
+</html>
+
+<!-- Configuration parameters can be customized here -->
+<script>    
+//    If a public signaling server does not work, or strong security is needed, you need to use your own signaling server.
+//    connection.socketURL = 'https://yoursocketioserver.com/';  
+
+//    videoConstraints = {
+//        width: 160,
+//        height: 120,
+//        frameRate: 5
+//    };   
+    
+    
+//    connection.iceServers = [];
+//
+//    connection.iceServers.push({
+//        urls: 'stun:stun.l.google.com:19302',
+//    });    
+//
+//    connection.iceServers.push({
+//        urls: 'stun:stun.l.google.com:19302?transport=udp',
+//    });            
+//    
+//    connection.iceServers.push({
+//        urls: 'turn:yourturnserver.com:3478',
+//        credential: 'yourpasscode',
+//        username: 'yourusername'
+//    });
+
+</script>

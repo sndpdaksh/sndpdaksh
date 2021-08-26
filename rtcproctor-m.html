@@ -1,0 +1,437 @@
+<!--
+  * RTCProctor - Monitor Page
+  * Peer-to-peer video proctoring for remote online exams based on WebRTC and RTCMulticonnection library
+  * Copyright 2021 Nopporn Chotikakamthorn, Chamikorn Phiwla-oung
+  * Source : https://github.com/nopcho/rtcproctor.git
+  * License : https://github.com/nopcho/rtcproctor/blob/main/LICENSE (MIT)
+-->
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset=utf-8>
+    <title>RTCProctor - Monitor Page</title>
+    <meta name=viewport content="width=device-width, initial-scale=1, , minimum-scale=1.0">
+    <link rel="shortcut icon" href="media/favicon.png" type="image/x-icon">  
+    <link rel="stylesheet" type="text/css" href="css/jayss-rtcp.css"> 
+    <link rel="stylesheet" type="text/css" href="css/rtcproctor-m.css">
+    <script src="js/FileSaver.min.js"></script>
+    <script>
+        // Public variables and default video dashboard layout/format
+        var numblk_eachrow = 5; //number of video blocks per row
+        var numrow = 3;  //number of rows per page
+        var numblk = numblk_eachrow * numrow;
+                
+        var endblk = 0; // define global var of last vdo block for each page  
+        var stream_status = [];
+        var num_streamon = 0;
+        var externalURL = "rtcproctor-mc.html";
+
+        //initialize video boxes
+        function init() {
+            var el = document.getElementById('vdoboxes');
+            el.innerHTML ='';
+            el.setAttribute('boxing', numblk_eachrow);
+        }
+        
+        //create and display a list of off-air streams
+        function showOffAir() {
+            var offair = offAirList();
+            var offlist = "List of off-air streams (Total connections made: " + offair[0] + ", Total off-air streams: " + offair[1] + ")\n";
+            offlist = offlist + offair[2];
+            var line = "==============  student-id only  =============\n"
+            var offlist = offlist + offair[2] + line + offair[3];
+            var w = window.open("");
+            w.document.write("<html><head><title>Offair List</title><style>body {font-family: sans-serif};</style></head><body><pre>" + offlist + "</pre></body></html>");
+        }
+        
+        //export a list of off-air streams as a downlodable text file
+		function saveOffAirToFile() {  
+            var offair = offAirList();
+            var offlist = "List of off-air streams (Total connections made: " + offair[0] + ", Total off-air streams: " + offair[1] + ")\n";
+            offlist = offlist + offair[2];
+            var blob = new Blob([offlist], { type: "text/plain;charset=utf-8" });
+            saveAs(blob, "offairlist.txt");
+        }
+        
+        function offAirList() {
+            var numcon = 0;
+            var numoff = 0;
+            var offlist_ = "";
+            var offlist_2 = "";
+            for (let i = 0; i < data.length; i++) {
+                if (stream_status[i] == 0) {
+                    offlist_ = offlist_ + data[i][0] + "\t" + data[i][1] + "\n";
+                    offlist_2 = offlist_2 + data[i][0] + "\n";
+                    numoff++;
+                    numcon++;
+                }
+                if (stream_status[i] == 1) {
+                    numcon++;
+                }
+            }
+            return [numcon, numoff, offlist_, offlist_2];
+        }
+        
+        //reset vdo page and return to a home/first page.
+        function resetHome() {
+           // document.getElementById('main-header').style.backgroundColor='darkorange';
+            location.reload();
+        }
+        
+        //toggle all videos on/off
+        function toggleAudio() {
+            let menu_btn = document.getElementById('audio_control');
+            if (menu_btn.innerHTML == "Turn Audio On") {
+                let mute_btn = document.getElementsByClassName("control unmute-audio selected"); 
+                if (mute_btn.length) {
+                    let i = 0;
+                    while (i < mute_btn.length) {
+                        //console.log(mute_btn[i]);
+                        mute_btn[i].click();
+                        setTimeout(function() {i++;}, 250);
+                    }
+                    menu_btn.innerHTML = "Turn Audio Off";
+                }    
+                
+            }
+            else {
+                let mute_btn = document.getElementsByClassName("control mute-audio"); 
+                if (mute_btn.length) {
+                    let i = 0;
+                    while (i < mute_btn.length) {
+                        //console.log(mute_btn[i]);
+                        mute_btn[i].click();
+                        setTimeout(function() {i++;}, 250);
+                    }
+                    menu_btn.innerHTML = "Turn Audio On"; 
+                }                
+            }
+        }
+        
+        //set the audio control menu name to its default value
+        function defaultAudioOff() {
+            let menu_btn = document.getElementById('audio_control');
+            menu_btn.innerHTML = "Turn Audio On";
+        }
+        
+        function openExternal(roomidx) {          
+            var padding_id = document.getElementById(data[roomidx][1]).parentNode.childNodes[2];
+            padding_id.childNodes[1].style.display = 'none';
+            console.log(data[roomidx][1]);
+            let URL = externalURL + "#" + data[roomidx][1] + "#" + data[roomidx][0];
+            window.open(URL, '_blank');
+        }
+        
+        function clearList() {
+          let list = document.getElementById("theList");
+              list.focus();
+              list.textContent = "";
+              list.value = "";
+        }
+        
+    </script>    
+    
+</head>
+    
+<body onload="init();">  
+    
+<h1 id="main-header">RTCProctor - Monitor Page</h1>
+<div class="menu">
+    <span class="menu-item" onclick="resetHome();">Home</span><span class="sepline">|</span><span class="menu-item" onclick="showOffAir();">Off-Air List</span><span class="sepline">|</span><span class="menu-item" onclick="saveOffAirToFile();">Download Off-Air List</span><span class="sepline">|</span><span class="menu-item" id="audio_control" onclick="toggleAudio();">Turn Audio On</span><span class="sepline">|</span><span class="menu-item" id="about_rtcproctor" onclick="window.open('https://github.com/nopcho/rtcproctor/blob/main/README.md', '_self');">About RTCProctor</span>
+</div> 
+    
+<section id="add_section" class="padding-l-vtc">
+    <anchor id="add"></anchor>
+    <div class="cont-pd t-right">
+        <!-- a stream list with sample data -->
+        <textarea id="theList" rows="18">studentid	streamcode
+00000001	room1</textarea>
+        <sp class=""></sp>
+        <button class="btn" id="clearList" onclick="clearList();">Clear</button>
+        <button class="btn" onclick="letPlay()">Next</button>
+    </div>
+</section>
+
+<section id="display_section" class="padding-s-vtc">
+    <div class="cont-pd t-center" id="display">
+        <theboxes class="middle center spacing -clip" boxing="5" id="vdoboxes"></theboxes>
+        <sp class="l"></sp>
+        <h5>Page &nbsp;&nbsp; <span id="page"></span></h5>
+    </div>
+</section>
+
+<!-- ==================================================================
+This part was based on RTCMulticonnection one-way video conf. demo -->
+
+<script src="js/RTCMultiConnection.min.js"></script>
+<script src="js/adapter.js"></script>
+<script src="js/socket.io.js"></script>
+<link rel="stylesheet" href="css/getHTMLMediaElement.css">
+<script src="js/getHTMLMediaElement.js"></script>    
+       
+<script>
+// ..................RTCMultiConnection Code.............
+var connection = new RTCMultiConnection();
+
+// Setup some default configurations
+    
+//connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+connection.socketURL = 'https://sndp-daksh.herokuapp.com/';
+
+connection.socketMessageEvent = 'rtc-video-proctoring';
+
+connection.session = {
+    audio: true,
+    video: true,
+    oneway: true
+};
+    
+connection.sdpConstraints.mandatory = {
+    OfferToReceiveAudio: false,
+    OfferToReceiveVideo: false
+};
+
+videoConstraints = {
+    width: {
+        ideal: 320
+    },
+    height: {
+        ideal: 240
+    },
+    frameRate: 5
+};    
+
+connection.onstream = function(event) {
+    var existing = document.getElementById(event.streamid);
+    if(existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
+
+    event.mediaElement.removeAttribute('src');
+    event.mediaElement.removeAttribute('srcObject');
+    event.mediaElement.muted = true;
+    event.mediaElement.volume = 0;
+
+    var video = document.createElement('video');
+
+    try {
+        video.setAttributeNode(document.createAttribute('autoplay'));
+        video.setAttributeNode(document.createAttribute('playsinline'));
+    } catch (e) {
+        video.setAttribute('autoplay', true);
+        video.setAttribute('playsinline', true);
+    }
+
+    if(event.type === 'remote') {
+      video.volume = 0;
+      try {          
+          video.setAttributeNode(document.createAttribute('muted'));
+      } catch (e) {
+          video.setAttribute('muted', true);
+      }
+    }
+    video.srcObject = event.stream;
+    
+    txt = connection.sessionid;
+    var width = parseInt(connection.videosContainer.clientWidth);  
+    var mediaElement = getHTMLMediaElement(video, {
+        title:txt,
+        buttons:['mute-audio', 'full-screen'],
+        width: width,
+        showOnMouseEnter: true,
+        toggle:['mute-audio']
+    });
+    connection.videosContainer.appendChild(mediaElement);
+    document.getElementById('main-header').style.backgroundColor = "green";
+    
+    mediaElement.id = event.streamid;
+    document.getElementById(connection.sessionid).parentNode.childNodes[2].setAttribute('id', event.userid);    
+    cit =  document.getElementById(connection.sessionid).getAttribute('data-id');
+    ci = parseInt(cit);
+    
+    console.log("ci: " + ci + ", endblk: " + endblk);
+    
+    if (ci < endblk) {
+        setTimeout(function() {playBlk(ci+1, endblk);}, 1500);
+    }
+};
+
+connection.onstreamended = function(event) {
+    var mediaElement = document.getElementById(event.streamid);
+    if (mediaElement) {
+        console.log(mediaElement.parentNode);
+        console.log("event.userid: " + event.userid + " con.sessionid:" + connection.sessionid + "streamid " + event.streamid);
+        mediaElement.parentNode.style.backgroundColor = "rgb(0,0,0)";
+        
+        let data_id = mediaElement.parentNode.getAttribute('data-id');
+
+        var padding_id = document.getElementById(data[data_id][1]).parentNode.childNodes[2];
+        padding_id.childNodes[1].style.display = 'none';                
+        
+        stream_status[data_id] = 0;
+        num_streamon--;
+        if (num_streamon <= 0) {
+            document.getElementById('main-header').style.backgroundColor = "dimgray";
+        }
+        mediaElement.parentNode.removeChild(mediaElement);
+
+        if(event.userid === connection.sessionid && !connection.isInitiator) {
+          alert('Broadcast is ended. We will reload this page to clear the cache.');
+          location.reload();
+        }
+    }
+};
+
+connection.onMediaError = function(e) {
+    if (e.message === 'Concurrent mic process limit.') {
+        if (DetectRTC.audioInputDevices.length <= 1) {
+            alert('Please select external microphone. Check github issue number 483.');
+            return;
+        }
+
+        var secondaryMic = DetectRTC.audioInputDevices[1].deviceId;
+        connection.mediaConstraints.audio = {
+            deviceId: secondaryMic
+        };
+
+        connection.join(connection.sessionid);
+    }
+}; 
+    
+connection.onExtraDataUpdated = function(event) {
+    var userid = event.userid;    
+    if(event.type != 'local' && event.extra.attention) {
+        var uid = document.getElementById(userid);
+        if (uid) {
+            uid.childNodes[1].style.display = 'inline';
+        }
+    }
+
+};     
+
+</script>
+    
+<!-- This is the main script for creating a video panel and pagination, and establishing streaming connections -->
+<script>
+
+    function letPlay(){
+        rows = [];
+        data = [];
+        stream_status = [];
+        rows = theList.value.split("\n");
+        for(let i of rows){
+            data.push(i.split("	"));
+            stream_status.push("-1");
+        }
+        
+        data.sort(function(a, b) {
+            return a[0] - b[0];
+        });
+
+        let pg = ``;
+        for(let p=0;p<Math.ceil(data.length/numblk);p++){
+            var pagenum = p + 1;
+            pg += `- <a href="#page_${p+1}" id="page_${p+1}" onclick="renderVdoBox(${p*numblk})" class="page"> ${p+1} </a>`;       
+        }
+        page.innerHTML = pg;
+        add_section.style.display = "none";
+        display_section.style.display = "block";
+        document.getElementById("page_1").click();
+    }
+    
+    function renderVdoBox(startblk){
+        connection.closeSocket();
+        num_streamon = 0; //store the number of on-streams on current page.
+        document.getElementById('main-header').style.backgroundColor = "dimgray";
+        defaultAudioOff(); //reset audio-setting menu 
+        let txt = '';
+        setTimeout(function() {
+            endblk = startblk + numblk - 1;
+            if (endblk >= data.length) {
+                endblk = data.length - 1;
+            }
+
+            for(let i = startblk; i <= endblk;i++){
+                if (data[i] != undefined) { 
+                    txt += `
+                    <box col=""><inner class="t-center bg-white shadow "><div class="vdostream-box" data-id="${i}" id="${data[i][1]}"></div>
+                    <h5 class="padding" id = "padding-id" onclick="openExternal(${i});">${data[i][0]}<img src='media/hand_waving_red.png' class='attn-sign'></h5>
+                    </inner></box>`;                                                      
+                }
+            }
+            vdoboxes.innerHTML = txt;
+            console.log("endblk = " + endblk + ", startblk = " + startblk);
+            setTimeout(function() {playBlk(startblk, endblk);}, 500); 
+        }, 1500);
+    }
+
+    function playBlk(p, endblk){
+            if (p <= endblk) {
+                    cid = p;
+                    console.log(cid);
+                    connection.videosContainer = document.getElementById(data[p][1]);
+                    connection.sdpConstraints.mandatory = {
+                        OfferToReceiveAudio: true,
+                        OfferToReceiveVideo: true
+                    };
+                    connection.join(data[p][1], function(isRoomExist, roomid, error) {
+                        //console.log("roomid: " + roomid );
+                        console.log("p= " + p + " isexist: " + isRoomExist);
+                        
+                        if (isRoomExist != true) {
+                            document.getElementById(data[p][1]).style.backgroundColor = "rgb(0,0,0)";
+                            stream_status[p] = 0;
+                            playBlk(p+1, endblk);
+                        } else if (error) {
+                                stream_status[p] = 0;                                                                         }
+                          else {
+                                stream_status[p] = 1;
+                                num_streamon++;
+                        }
+                    });      
+            };
+    }    
+    
+</script>
+    
+</body>
+</html>
+
+<!-- Configuration parameters can be customized here -->
+<script>
+//    numblk_eachrow = 6;
+//    numrow = 3;
+//    numblk = numblk_eachrow * numrow;
+//    
+//    If a public signaling server does not work, or strong security is needed, you need to use your own signaling server.
+//    connection.socketURL = 'https://yoursocketioserver.com/';
+    
+//    videoConstraints = {
+//        width: 160,
+//        height: 120,
+//        frameRate: 5
+//    };
+    
+//    connection.iceServers = [];
+//
+//    connection.iceServers.push({
+//        urls: 'stun:stun.l.google.com:19302',
+//    });    
+//
+//    connection.iceServers.push({
+//        urls: 'stun:stun.l.google.com:19302?transport=udp',
+//    });            
+//    
+//    connection.iceServers.push({
+//        urls: 'turn:yourturnserver.com:3478',
+//        credential: 'yourpasscode',
+//        username: 'yourusername'
+//    });    
+    
+//    externalURL = "rtcproctor-mc.html"; //monitor+chat page
+    
+//    var  thelist = document.getElementById("theList");
+//    var txt = "00000001	room1\n00000002	room2\n00000003	room3\n00000004	room4\n00000005	room5\n00000006	room6\n00000007	room7\n00000008	room8\n00000009	room9\n00000010	room10";    
+//    thelist.innerHTML = txt;
+    
+</script>

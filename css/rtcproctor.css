@@ -1,0 +1,226 @@
+.media-container {
+    min-width:50% !important;
+/*    width:60% !important; */
+}
+html {
+	font-family: sans-serif;
+	-webkit-text-size-adjust: 100%;
+	-ms-text-size-adjust:     100%;    
+}
+
+body {
+    margin:0px;
+	width: 100%;
+}
+h1 {  
+    top: 0;
+    background-color:dimgray;
+    text-align:center;
+    color:whitesmoke;
+    margin:0px;
+    padding:5px;
+    font-size:15px;
+}
+
+.main-container {
+    margin:auto;
+    width: 90%; 
+    padding: 20px;
+}
+
+
+.input-box {
+    float:left;
+    width: 60%;
+    padding: 0px 5px 10px 0px;
+}
+
+#selectcam {
+  -moz-appearance: none; 
+  -webkit-appearance: none; 
+  appearance: none;     
+  width: 40%; 
+  padding: 10px 5px;    
+  margin-bottom:0px;
+  margin-right:5px;
+  background-color:white;
+  border-radius:0px;
+  border-width:1px;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, black 50%),
+    linear-gradient(135deg, black 50%, transparent 50%),
+    linear-gradient(to right, lightgray, lightgray);
+  background-position:
+    calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px), 100% 0;
+  background-size:
+    5px 5px,
+    5px 5px,
+    3.25em 3em;
+  background-repeat: no-repeat;
+}
+
+#selectcam:focus {
+  background-image:
+    linear-gradient(45deg, white 50%, transparent 50%),
+    linear-gradient(135deg, transparent 50%, white 50%),
+    linear-gradient(to right, gray, gray);
+  background-position:
+    calc(100% - 15px) 1em,
+    calc(100% - 20px) 1em,
+    100% 0;
+  background-size:
+    5px 5px,
+    5px 5px,
+    3.25em 3em;
+  background-repeat: no-repeat;
+  border-color: grey;
+  outline: 0;
+}
+
+#stream-code {
+  width: 45%; 
+  padding: 10px 10px;
+  border-color:black;
+  border-width:1px;
+}
+
+.button-box {
+  float:left;
+  margin-bottom:0px;
+  padding:0px 0px 10px 0px;
+}  
+
+.stream-container {
+  width: 100%; 
+}  
+
+#videos-container {
+  width:45%;
+  float:left;
+  margin-top:10px;
+  padding:0px 10px 10px 0px;
+} 
+
+.media-container {
+    width:100% !important;
+    background-color:lightgray
+}  
+
+#message-container {
+  float:left;
+  width:45%;
+  margin-top:10px;
+  padding:0px 0px 10px 0px;
+} 
+
+.attention {
+  position: relative;
+  padding: 0px 0px;
+  z-index:1;
+}
+
+img {
+    position:relative;
+    top:5px;
+}
+#attn-button {
+    width:30px;
+    position:absolute;
+    right:0px;
+    top:10px;
+    padding:0px;
+    cursor:pointer;
+    background-color:#eeeeee;
+    border-radius:0.5em;
+}
+
+#chatmsg-box {
+  width:100%;
+  height:10em;
+  padding: 10px 10px;
+  margin-bottom:10px;
+  background-color:#eeeeee;
+  font-size:0.9em;
+  border-style:solid;
+  border-width: 1px;
+  overflow: scroll;
+}
+
+#msg-to-remote {
+  width:100%;
+  padding: 10px 10px;
+  margin-bottom:10px;
+}
+
+.btn {
+  margin-right:10px;
+  padding: 10px 10px;
+  min-width:50px;
+  background-color:white;
+  color:black;
+  border-width:thin;
+  border-color:black;
+  border-radius: 2px;
+  transition-duration: 0.2s;
+  cursor: pointer;
+}        
+
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { 
+    background-color:darkgray; 
+    color: white;
+  }
+}
+.btn:active {
+  background-color:darkgray;
+  color: white;
+}
+
+.btn:disabled {
+  background-color:white; 
+  color: darkgray;
+  border-color:lightgray;
+  cursor:default;
+}
+
+.local-txt {
+  color:#666666;
+  float:right;
+}
+
+.remote-txt {
+  color:black;    
+}
+/* Use a media query to add a breakpoint at 500px: */
+@media screen and (max-width: 500px) {
+    .main-container  {
+      width:100%;
+    }
+    #stream-code {
+      width: 60%;
+    }
+    #selectcam {
+      width: 30%;
+    }
+
+    #videos-container {
+      width:60%;
+      padding:0px 0px 10px 0px;
+    }
+    #message-container {
+      width:60%;
+    }
+    #msg-to-remote, #remote-msg {
+      width:95%;
+    }
+
+    .button-box, .input-box  {
+      width: 90%; 
+    }
+    .media-container {
+    width:100% !important;
+    }
+
+}
